@@ -13,25 +13,24 @@ public class Day25 {
         File input = new File("Day25\\input25.txt");
         Scanner sc = new Scanner(input);
 
-        Map <Integer, String> table = new HashMap<>(); 
-        
+        Map<Integer, String> table = new HashMap<>();
         int lineNumber = 1;
         while (sc.hasNextLine()) {
             String line = sc.nextLine().trim();
             if (!line.isEmpty()) {
                 table.put(lineNumber, line);
-                lineNumber++; 
+                lineNumber++;
             }
         }
         sc.close();
 
-        Map <Integer, List<String>> keys = new HashMap<>();
-        Map <Integer, List<String>> locks = new HashMap<>(); 
+        Map<Integer, List<String>> keys = new HashMap<>();
+        Map<Integer, List<String>> locks = new HashMap<>();
 
         int i = 1;
         while (i <= table.size()) {
-            String firstLine = table.get(i); 
-            if (firstLine == null || firstLine.isEmpty()) { // Ignorar linhas vazias
+            String firstLine = table.get(i);
+            if (firstLine == null || firstLine.isEmpty()) {
                 i++;
                 continue;
             }
@@ -43,7 +42,7 @@ public class Day25 {
                     lockBlock.add(table.get(i + j));
                 }
                 locks.put(i, lockBlock);
-                i += 6; 
+                i += 6;
             }
             // Check for key patterns
             else if (firstLine.equals(".....")) {
@@ -51,70 +50,46 @@ public class Day25 {
                 for (int j = 0; j < 6 && i + j <= table.size(); j++) {
                     keyBlock.add(table.get(i + j));
                 }
-                keys.put(i, keyBlock); 
-                i += 6; 
+                keys.put(i, keyBlock);
+                i += 6;
             } else {
-                i++; 
+                i++;
             }
         }
-        // Evaluate pin heights
-        Map<Integer, List<Integer>> keyPinHeights = evaluatePinHeights(keys);
-        Map<Integer, List<Integer>> lockPinHeights = evaluatePinHeights(locks);
-        // Output results
-        //System.out.println("Key Pin Heights: " + keyPinHeights);
-        //System.out.println("Lock Pin Heights: " + lockPinHeights);
 
-        // Answer
-        int answer1 = findMatches(keyPinHeights, lockPinHeights);
-        System.out.println("How many unique lock/key pairs fit together without overlapping in any column?" + answer1);
+        int uniquePairs = countValidPairs(keys, locks);
+        System.out.println("How many unique lock/key pairs fit together without overlapping in any column? Answer: " + uniquePairs);
     }
 
-    public static Map<Integer, List<Integer>> evaluatePinHeights(Map<Integer, List<String>> blocks) {
-        Map<Integer, List<Integer>> pinHeights = new HashMap<>();
+    public static int countValidPairs(Map<Integer, List<String>> keys, Map<Integer, List<String>> locks) {
+        int count = 0;
 
-        for (Map.Entry<Integer, List<String>> entry : blocks.entrySet()) {
-            int blockStartIndex = entry.getKey();
-            List<String> blockLines = entry.getValue();
-            List<Integer> heights = new ArrayList<>();
+        for (Map.Entry<Integer, List<String>> keyEntry : keys.entrySet()) {
+            List<String> keyBlock = keyEntry.getValue();
 
-            for (int col = 0; col < blockLines.get(0).length(); col++) {
-                int height = 0;
-                for (String line : blockLines) {
-                    if (line.charAt(col) == '#') {
-                        height++;
-                    }
-                }
-                heights.add(height);
-            }
+            for (Map.Entry<Integer, List<String>> lockEntry : locks.entrySet()) {
+                List<String> lockBlock = lockEntry.getValue();
 
-            pinHeights.put(blockStartIndex, heights);
-        }
-        return pinHeights;
-    }
-        
-    public static int findMatches(Map<Integer, List<Integer>> keyPinHeights, Map<Integer, List<Integer>> lockPinHeights){
-        int matchCount = 0;
-        for (int i = 0; i < lockPinHeights.size(); i++) {
-            for (int j = 0; j < keyPinHeights.size(); j++) {
-                if (ehMatch(lockPinHeights.get(i), keyPinHeights.get(i))) {
-                    matchCount++;
+                if (fitsTogether(keyBlock, lockBlock)) {
+                    count++;
                 }
             }
         }
-        return matchCount;
+
+        return count;
     }
 
-    public static boolean ehMatch(List<Integer> keyPinHeights,List<Integer> lockPinHeights){
-        if (lockPinHeights == null || keyPinHeights == null) {
-            return false;
-        }
-        for (Integer lock : lockPinHeights) {
-            for (Integer key : keyPinHeights) {
-                if (lock+key>5) {
-                    return false;
+    public static boolean fitsTogether(List<String> keyBlock, List<String> lockBlock) {
+        for (int col = 0; col < keyBlock.get(0).length(); col++) {
+            for (int row = 0; row < keyBlock.size(); row++) {
+                char keyChar = keyBlock.get(row).charAt(col);
+                char lockChar = lockBlock.get(row).charAt(col);
+
+                if (keyChar == '#' && lockChar == '#') {
+                    return false; // Overlap found
                 }
             }
         }
-        return true;
+        return true; // No overlaps in any column
     }
 }
